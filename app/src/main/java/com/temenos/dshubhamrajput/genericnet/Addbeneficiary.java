@@ -34,7 +34,9 @@ public class Addbeneficiary extends AppCompatActivity {
     public static String benID;
     public static boolean success=true;
     ProgressDialog progressDialog;
-
+    String[] errorMessage;
+    EditText benAccNo;
+    EditText ifscEtext;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,8 +46,8 @@ public class Addbeneficiary extends AppCompatActivity {
         final CheckBox withinbank1 = (CheckBox) findViewById(R.id.withinbank);
         final CheckBox neft1 = (CheckBox) findViewById(R.id.neft);
         final TextView ifscTextview = (TextView) findViewById(R.id.textView5);
-        final EditText ifscEtext = (EditText) findViewById(R.id.Ifsc);
-        final EditText benAccNo = (EditText) findViewById(R.id.BenAccNo);
+        ifscEtext = (EditText) findViewById(R.id.Ifsc);
+        benAccNo = (EditText) findViewById(R.id.BenAccNo);
         final EditText accNoCheck = (EditText) findViewById(R.id.ReenterAccNo);
         final EditText emailUser = (EditText) findViewById(R.id.Email);
         final EditText nickName = (EditText) findViewById(R.id.NickName);
@@ -60,6 +62,11 @@ public class Addbeneficiary extends AppCompatActivity {
                 // TODO Auto-generated method stub
                 if (withinbank1.isChecked()) {
                     neft1.setChecked(false);
+                    benAccNo.setError(null);
+                    accNoCheck.setError(null);
+                    emailUser.setError(null);
+                    nickName.setError(null);
+                    ifscEtext.setError(null);
                     ifscTextview.setVisibility(View.INVISIBLE);
                     ifscEtext.setVisibility(View.INVISIBLE);
                     helpIcon.setVisibility(View.INVISIBLE);
@@ -74,6 +81,11 @@ public class Addbeneficiary extends AppCompatActivity {
                 // TODO Auto-generated method stub
                 if (neft1.isChecked()) {
                     withinbank1.setChecked(false);
+                    benAccNo.setError(null);
+                    accNoCheck.setError(null);
+                    emailUser.setError(null);
+                    nickName.setError(null);
+                    ifscEtext.setError(null);
                     ifscTextview.setVisibility(View.VISIBLE);
                     ifscEtext.setVisibility(View.VISIBLE);
                     helpIcon.setVisibility(View.VISIBLE);
@@ -122,8 +134,9 @@ public class Addbeneficiary extends AppCompatActivity {
                     if (!((accNoCheck.getText().toString()).matches("")))
                         accNoCheck.setError("Account numbers don't match");
                 }
-                else if(((accNoCheck.getText().toString()).matches("")))
-                    accNoCheck.setError("This field cannot be left blank");
+                else if(((accNoCheck.getText().toString()).equals("")))
+                    if(!(benAccNo.getText().toString()).equals(""))
+                        accNoCheck.setError("This field cannot be left blank");
                 else
                     accNoCheck.setError(null);
             }
@@ -173,6 +186,32 @@ public class Addbeneficiary extends AppCompatActivity {
                 }
             }
         });
+        benAccNo.addTextChangedListener(new TextWatcher() {
+            // ...
+            @Override
+            public void onTextChanged(CharSequence text, int start, int count, int after) {
+                if (!(accNoCheck.getText().toString().equals(benAccNo.getText().toString()))) {
+                    if (!((accNoCheck.getText().toString()).equals("")))
+                        accNoCheck.setError("Account numbers don't match");
+                }
+                else if(((accNoCheck.getText().toString()).equals("")))
+                    accNoCheck.setError("This field cannot be left blank");
+                else
+                    accNoCheck.setError(null);
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+                // TODO Auto-generated method stub
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
     }
 
     public boolean emailValidator(String email) {
@@ -361,19 +400,34 @@ public class Addbeneficiary extends AppCompatActivity {
             if (success) {
                 progressDialog.dismiss();
                 startActivity(commit);
-            } else {
+            }else {
                 progressDialog.dismiss();
                 errorObj = new HttpHandler();
                 errorList = errorObj.getErrorList();
+                errorMessage= new String[errorList.size()];
                 for (int i = 0; i < errorList.size(); i++) {
                     error = errorList.get("Error" + i);
                     text = error.get("text");
-                    info = error.get("info");
+                    info = error.get("info");//field
+                    errorMessage[i]=info;
                 }
-                showErrorText();
+                for(int i=0;i<errorList.size();i++)
+                {
+                    if(intentData.equals("internal")) {
+                        if (errorMessage[i].contains("BenCustomer"))
+                            benAccNo.setError("Check Account Number Entered");
+                    }
+
+                    else if(errorMessage[i].contains("SortCode"))
+                        ifscEtext.setError("Check IFSC Code Entered");
+
+                }
+
+            }
+
             }
         }
-    }
+
 
     private class NewDeal extends AsyncTask<Void, Void, Void> {
 
